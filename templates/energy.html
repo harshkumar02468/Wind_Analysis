@@ -31,7 +31,7 @@
             background-color: transparent;
         }
 .left-panel, .right-panel {
-    height: 100%; /* Make panels fill available height */
+    height: 100%; 
 }
         h1, h2, h3, h4, h5, h6 {
             font-family: 'Poppins', sans-serif;
@@ -81,7 +81,7 @@
             width: 20px;
             text-align: center;
         }
-        /* Right Panel Styles */
+       
         .right-panel {
             width: var(--right-panel-width);
             padding: var(--panel-padding);
@@ -99,7 +99,7 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* Card Styles */
+       
         .card {
             border-radius: 10px;
             border: none;
@@ -119,7 +119,7 @@
             padding: 15px 20px;
             border-bottom: none;
         }
-        /* Button Styles */
+       
         .btn-primary {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
@@ -146,7 +146,7 @@
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
         }
-        /* State Checkboxes */
+      
         .state-checkboxes {
             max-height: 300px;
             overflow-y: auto;
@@ -162,14 +162,14 @@
             background-color: var(--primary-color);
             border-color: var(--primary-color);
         }
-        /* Power Curve Groups */
+      
         .power-curve-group {
             display: flex;
             align-items: center;
             gap: 10px;
             margin-bottom: 10px;
         }
-        /* Progress and Status */
+      
         .progress-container {
             position: fixed;
             top: 0;
@@ -207,7 +207,7 @@
             background-color: transparent;
             color: black;
         }
-        /* Chart Container */
+     
         .chart-container {
             position: relative;
             height: 400px;
@@ -216,7 +216,7 @@
             padding: 15px;
             box-shadow: var(--card-shadow);
         }
-        /* Responsive Adjustments */
+       
         @media (max-width: 992px) {
             body {
                 flex-direction: column;
@@ -233,14 +233,14 @@
                 width: 100%;
             }
         }
-        /* Animation for buttons */
+       
         .btn {
             transition: all 0.3s ease;
         }
         .btn:hover {
             transform: translateY(-2px);
         }
-        /* Custom scrollbar */
+      
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -261,34 +261,34 @@
             font-weight: 500;
             padding: 5px 8px;
         }
-        /* Site selection controls */
+       
         .site-controls {
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        /* Modal styling */
+       
         .modal-content {
             border-radius: 10px;
         }
-        /* Extrapolation checkbox */
+       
         .extrapolation-checkbox {
             cursor: pointer;
         }
-        /* Power curve chart container */
+      
         .power-curve-chart-container {
             height: 500px;
         }
-        /* Yearly average row */
+       
         .yearly-average-row {
             background-color: transparent;
             font-weight: bold;
         }
          .main {
         display: flex;
-        flex-direction: row; /* Override column layout */
+        flex-direction: row; 
         flex: 1;
-        height: calc(100vh - 84px); /* 84px = header height */
+        height: calc(100vh - 84px); 
     }
     </style>
 </head>
@@ -609,23 +609,23 @@
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <script>
-    // Global variable to store cached data sheet results
+    
     let cachedDataSheetResults = {};
     $(document).ready(function() {
-        // Initialize date pickers
+       
         initializeDatePickers();
-        // Navigation button click handler
+        
         $(".nav-btn").click(function() {
-            // Remove active class from all buttons and sections
+            
             $(".nav-btn").removeClass("active");
             $(".content-section").removeClass("active");
-            // Add active class to clicked button
+           
             $(this).addClass("active");
-            // Show corresponding section
+            
             const sectionId = $(this).data("section");
             $("#" + sectionId).addClass("active");
         });
-        // State checkboxes change handler
+        
         $(".state-checkbox").change(function() {
             const state = $(this).val();
             const isChecked = $(this).is(":checked");
@@ -635,21 +635,21 @@
                 $(`#state-container-${state.replace(/\s+/g, '-')}`).remove();
             }
         });
-        // Add power curve dropdown
+        
         $(".add-power-curve-btn").click(function() {
             addPowerCurveDropdown();
         });
-        // Remove power curve dropdown
+        
         $(document).on('click', '.remove-power-curve-btn', function() {
             $(this).closest('.power-curve-group').remove();
         });
-        // Date range type change handler
+      
         $("input[name='date-range-type']").change(function() {
             updateDateRangeInputs();
         });
-        // Initialize with single day input
+       
         updateDateRangeInputs();
-        // Save loss factors
+       
         $("#save-loss-factors-btn").click(function() {
             const lossFactors = {
                 machineAvailability: parseFloat($("#machine-availability").val()) || 0,
@@ -659,7 +659,7 @@
                 Horizontalextrapolation: parseFloat($("#horizontal-extrapolation").val()) || 0,
                 otherLosses: parseFloat($("#other-losses").val()) || 0
             };
-            // Send to server
+           
             $.ajax({
                 url: "/update_loss_factors",
                 method: "POST",
@@ -678,43 +678,43 @@
                 }
             });
         });
-        // Process button click
+        
         $("#process-btn").click(function() {
             processData();
         });
-        // Show results button click
+        
         $("#show-results-btn").click(function() {
-            // Activate the results section
+          
             $(".nav-btn").removeClass("active");
             $(".content-section").removeClass("active");
             $(this).addClass("active");
             $("#results-section").addClass("active");
         });
-        // Show data sheet button click
+      
         $("#show-data-sheet-btn").click(function() {
             showDataSheetModal();
         });
-        // Data sheet site select change
+      
         $("#data-sheet-site-select").change(function() {
             const selectedSite = $(this).val();
             if (selectedSite) {
                 loadDataSheet(selectedSite);
             }
         });
-        // Download data sheet button click
+     
         $("#download-data-sheet-btn").click(function() {
             downloadDataSheet();
         });
-        // Initialize with current date
+      
         $(".single-day-input .date-input-single-day").val(getFormattedDate(new Date()));
     });
     function initializeDatePickers() {
-        // Single day input
+      
         flatpickr(".date-input-single-day", {
             dateFormat: "d-m-Y",
             defaultDate: "today"
         });
-        // Monthly input
+   
         flatpickr(".date-input-monthly", {
             plugins: [new monthSelectPlugin({
                 shorthand: true,
@@ -723,7 +723,7 @@
             })],
             defaultDate: "today"
         });
-        // Yearly input
+    
         flatpickr(".date-input-yearly", {
             plugins: [new monthSelectPlugin({
                 shorthand: true,
@@ -732,7 +732,7 @@
             })],
             defaultDate: "today"
         });
-        // Date range inputs
+   
         flatpickr(".date-input-range-start", {
             dateFormat: "d-m-Y",
             defaultDate: "today"
@@ -745,7 +745,7 @@
     function addStateContainer(state) {
     const stateId = state.replace(/\s+/g, '-');
     if ($(`#state-container-${stateId}`).length) {
-        return; // Container already exists
+        return; 
     }
     const container = $(`
         <div class="state-container mb-3" id="state-container-${stateId}">
@@ -775,9 +775,9 @@
         </div>
     `);
     $("#state-containers").append(container);
-    // Load masts for this state
+   
     loadMasts(state, container.find(".mast-select"));
-    // Mast select change handler
+   
     container.find(".mast-select").change(function() {
         const selectedMast = $(this).val();
         const speedColSelect = $(this).closest(".d-flex").find(".speed-col-select");
@@ -788,7 +788,7 @@
             speedColSelect.prop("disabled", true).empty().append('<option value="">Select Speed Column</option>');
         }
     });
-        // Extrapolation checkbox handler
+     
         container.find(".extrapolation-checkbox").change(function() {
             if ($(this).is(":checked")) {
                 const mastSelect = $(this).closest(".d-flex").find(".mast-select");
@@ -803,7 +803,7 @@
                 }
             }
         });
-        // Add site button handler
+       
 container.find(".add-site-btn").click(function() {
     const siteGroup = $(this).closest(".site-group");
     const newSiteRow = $(`
@@ -822,9 +822,9 @@ container.find(".add-site-btn").click(function() {
         </div>
     `);
             siteGroup.append(newSiteRow);
-            // Load masts for the new select
+          
             loadMasts(state, newSiteRow.find(".mast-select"));
-            // Mast select change handler for new row
+          
             newSiteRow.find(".mast-select").change(function() {
                 const selectedMast = $(this).val();
                 const speedColSelect = $(this).closest(".d-flex").find(".speed-col-select");
@@ -835,7 +835,7 @@ container.find(".add-site-btn").click(function() {
                     speedColSelect.prop("disabled", true).empty().append('<option value="">Select Speed Column</option>');
                 }
             });
-            // Extrapolation checkbox handler for new row
+           
             newSiteRow.find(".extrapolation-checkbox").change(function() {
                 if ($(this).is(":checked")) {
                     const mastSelect = $(this).closest(".d-flex").find(".mast-select");
@@ -850,13 +850,13 @@ container.find(".add-site-btn").click(function() {
                     }
                 }
             });
-            // Remove site button handler
+         
             newSiteRow.find(".remove-site-btn").click(function(e) {
                 e.preventDefault();
                 $(this).closest(".d-flex").remove();
             });
         });
-        // Remove state button handler
+      
         container.find(".remove-state-btn").click(function() {
             $(`#state-${state.replace(/\s+/g, '-')}`).prop("checked", false);
             $(this).closest(".state-container").remove();
@@ -900,7 +900,7 @@ container.find(".add-site-btn").click(function() {
                 hideStatus();
                 if (response.columns && response.columns.length > 0) {
                     selectElement.empty().append('<option value="">Select Speed Column</option>');
-                    // Filter for speed columns only
+              
                     const speedColumns = response.columns.filter(col => 
                         col.includes('Spd') && !col.includes('Dir') && !col.includes('Std')
                     );
@@ -922,7 +922,7 @@ container.find(".add-site-btn").click(function() {
         });
 }
     function showExtrapolationModal(state, mast, speedCol) {
-        // Reset modal
+   
         $("#extrapolation-height").val("");
         $("#height-checkboxes").empty();
         $("#alpha-value").text("-");
