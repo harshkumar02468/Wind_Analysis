@@ -1,0 +1,1896 @@
+{% extends "base.html" %}
+{% block title %}Mast Dashboard{% endblock %}
+{% block content %} 
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-bg: #f8fafc;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --card-hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --left-panel-width: 20%;
+            --right-panel-width: 80%;
+            --panel-padding: 20px;
+            --sidebar-bg: #2c3e50;
+            --sidebar-text: #ffffff;
+            --sidebar-hover: #3498db;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            background-color: transparent;
+        }
+.left-panel, .right-panel {
+    height: 100%; /* Make panels fill available height */
+}
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+        }
+        /* Left Panel Styles */
+        .left-panel {
+            width: var(--left-panel-width);
+            background-color: transparent;
+            color: rgb(3, 3, 3);
+            padding: var(--panel-padding);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .nav-section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: rgba(3, 3, 3, 0.7);
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .nav-btn {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            text-align: left;
+            color: black;
+            background-color: transparent;
+            border: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .nav-btn:hover, .nav-btn.active {
+            background-color: var(--sidebar-hover);
+            color: white;
+        }
+        .nav-btn i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        /* Right Panel Styles */
+        .right-panel {
+            width: var(--right-panel-width);
+            padding: var(--panel-padding);
+            overflow-y: auto;
+            background-color: transparent;
+        }
+        .content-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .content-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Card Styles */
+        .card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 20px;
+            background-color: transparent;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--card-hover-shadow);
+        }
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 15px 20px;
+            border-bottom: none;
+        }
+        /* Button Styles */
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        /* Form Elements */
+        .form-control, .form-select {
+            border-radius: 6px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+        /* State Checkboxes */
+        .state-checkboxes {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: transparent;
+        }
+        .form-check-inline {
+            margin-right: 1.2rem;
+            margin-bottom: 0.8rem;
+        }
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        /* Power Curve Groups */
+        .power-curve-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        /* Progress and Status */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: var(--left-panel-width);
+            width: var(--right-panel-width);
+            height: 4px;
+            background-color: transparent;
+            z-index: 9999;
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .status-message {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 12px 18px;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 8px;
+            z-index: 10000;
+            display: none;
+            box-shadow: var(--card-shadow);
+        }
+        /* Table Styles */
+        .table-responsive {
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+        }
+        .table th {
+            background-color: transparent;
+            color: black;
+        }
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            background-color: transparent;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: var(--card-shadow);
+        }
+        /* Responsive Adjustments */
+        @media (max-width: 992px) {
+            body {
+                flex-direction: column;
+            }
+            .left-panel, .right-panel {
+                width: 100%;
+                min-height: auto;
+            }
+            .left-panel {
+                padding: 15px;
+            }
+            .progress-container {
+                left: 0;
+                width: 100%;
+            }
+        }
+        /* Animation for buttons */
+        .btn {
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        /* Badge styling */
+        .badge {
+            font-weight: 500;
+            padding: 5px 8px;
+        }
+        /* Site selection controls */
+        .site-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        /* Modal styling */
+        .modal-content {
+            border-radius: 10px;
+        }
+        /* Extrapolation checkbox */
+        .extrapolation-checkbox {
+            cursor: pointer;
+        }
+        /* Power curve chart container */
+        .power-curve-chart-container {
+            height: 500px;
+        }
+        /* Yearly average row */
+        .yearly-average-row {
+            background-color: transparent;
+            font-weight: bold;
+        }
+         .main {
+        display: flex;
+        flex-direction: row; /* Override column layout */
+        flex: 1;
+        height: calc(100vh - 84px); /* 84px = header height */
+    }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="status-message" id="statusMessage"></div>
+<div class="main">
+    <div class="left-panel" style="width: 20%; min-height: 100%; overflow-y: auto;">
+        <div class="nav-section">
+            <div class="section-title">INPUT PARAMETERS</div>
+            <button class="nav-btn active" data-section="state-section">
+                <i class="bi bi-pin-map"></i> State Selection
+            </button>
+            <button class="nav-btn" data-section="power-curve-section">
+                <i class="bi bi-lightning-charge"></i> Power Curves
+            </button>
+            <button class="nav-btn" data-section="date-range-section">
+                <i class="bi bi-calendar"></i> Date Range
+            </button>
+            <button class="nav-btn" data-section="loss-factors-section">
+                <i class="bi bi-sliders"></i> Loss Factors
+            </button>
+        </div>
+        <div class="nav-section">
+            <div class="section-title">OUTPUT</div>
+            <button class="btn btn-primary w-100 mb-3" id="process-btn">
+                <i class="bi bi-gear"></i> Process Data
+            </button>
+            <button class="nav-btn" data-section="results-section" id="show-results-btn" disabled>
+                <i class="bi bi-graph-up"></i> Show Results
+            </button>
+            <button class="nav-btn" data-section="data-sheet-section" id="show-data-sheet-btn" disabled>
+                <i class="bi bi-table"></i> Data Sheet
+            </button>
+        </div>
+    </div>
+    <div class="right-panel" style="width: 80%; min-height: 100%; overflow-y: auto;">
+        <div id="state-section" class="content-section active">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-pin-map"></i> Site Selection</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Select States:</label>
+                        <div class="state-checkboxes">
+                            {% for state in states %}
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input state-checkbox" type="checkbox" id="state-{{ loop.index }}" value="{{ state }}">
+                                <label class="form-check-label" for="state-{{ loop.index }}">{{ state }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div id="state-containers"></div>
+                </div>
+            </div>
+        </div>
+        <div id="power-curve-section" class="content-section">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-lightning-charge"></i> Power Curves</h5>
+                </div>
+                <div class="card-body">
+                    <div id="power-curve-container">
+                        <div class="power-curve-group mb-2">
+                            <select class="form-select power-curve-select">
+                                <option value="">Select Power Curve</option>
+                                {% for curve in power_curves %}
+                                <option value="{{ curve }}">{{ curve }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-outline-primary add-power-curve-btn">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="date-range-section" class="content-section">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-calendar"></i> Date Range</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Time Period:</label>
+                        <div class="btn-group date-range-type w-100" role="group">
+                            <input type="radio" class="btn-check" name="date-range-type" id="single-day" autocomplete="off" checked>
+                            <label class="btn btn-outline-primary" for="single-day">
+                                <i class="bi bi-calendar-day"></i> Single Day
+                            </label>
+                            <input type="radio" class="btn-check" name="date-range-type" id="monthly" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="monthly">
+                                <i class="bi bi-calendar-month"></i> Monthly
+                            </label>
+                            <input type="radio" class="btn-check" name="date-range-type" id="yearly" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="yearly">
+                                <i class="bi bi-calendar"></i> Yearly
+                            </label>
+                            <input type="radio" class="btn-check" name="date-range-type" id="date-range" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="date-range">
+                                <i class="bi bi-calendar-range"></i> Date Range
+                            </label>
+                            <input type="radio" class="btn-check" name="date-range-type" id="average" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="average">
+                                <i class="bi bi-calendar-check"></i> Average
+                            </label>
+                        </div>
+                    </div>
+                    <div id="date-range-inputs" class="mt-3">
+                        <div class="single-day-input">
+                            <label class="form-label">Select Date:</label>
+                            <input type="text" class="form-control date-input-single-day" placeholder="DD-MM-YYYY">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="loss-factors-section" class="content-section">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-sliders"></i> Loss Factors</h5>
+                    <button class="btn btn-sm btn-outline-light" id="save-loss-factors-btn">
+                        <i class="bi bi-check-circle"></i> Save Changes
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="machine-availability" class="form-label">Machine Availability (%)</label>
+                                <input type="number" class="form-control" id="machine-availability" min="0" max="100" step="0.1" value="5">
+                            </div>
+                            <div class="mb-3">
+                                <label for="grid-losses" class="form-label">Grid Losses (%)</label>
+                                <input type="number" class="form-control" id="grid-losses" min="0" max="100" step="0.1" value="2">
+                            </div>
+                            <div class="mb-3">
+                                <label for="transmission-losses" class="form-label">Transmission Losses (%)</label>
+                                <input type="number" class="form-control" id="transmission-losses" min="0" max="100" step="0.1" value="3">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="airdensity-correction" class="form-label">Air Density Correction (%)</label>
+                                <input type="number" class="form-control" id="airdensity-correction" min="0" max="100" step="0.1" value="9.5">
+                            </div>
+                            <div class="mb-3">
+                                <label for="horizontal-extrapolation" class="form-label">Horizontal Extrapolation (%)</label>
+                                <input type="number" class="form-control" id="horizontal-extrapolation" min="0" max="100" step="0.1" value="2">
+                            </div>
+                            <div class="mb-3">
+                                <label for="other-losses" class="form-label">Other Losses (%)</label>
+                                <input type="number" class="form-control" id="other-losses" min="0" max="100" step="0.1" value="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="results-section" class="content-section">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Analysis Results</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="resultsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary-tab-pane" type="button" role="tab">
+                                <i class="bi bi-table"></i> Summary
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly-tab-pane" type="button" role="tab">
+                                <i class="bi bi-calendar"></i> Monthly Results
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="charts-tab" data-bs-toggle="tab" data-bs-target="#charts-tab-pane" type="button" role="tab">
+                                <i class="bi bi-bar-chart"></i> Charts
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content mt-3" id="resultsTabContent">
+                        <div class="tab-pane fade show active" id="summary-tab-pane" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover results-table" id="results-table">
+                                    <thead>
+                                        <tr>
+                                            <th>State</th>
+                                            <th>Mast</th>
+                                            <th>Speed Column</th>
+                                            <th>Power Curve</th>
+                                            <th>Avg Speed</th>
+                                            <th>Std Dev</th>
+                                            <th>Shape</th>
+                                            <th>Scale</th>
+                                            <th>MoMM</th>
+                                            <th>Power (kW)</th>
+                                            <th>Gross Energy</th>
+                                            <th>Net Energy</th>
+                                            <th>Gross PLF</th>
+                                            <th>Net PLF</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="monthly-tab-pane" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-striped monthly-table" id="monthly-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Month</th>
+                                            <th>Mast</th>
+                                            <th>Power Curve</th>
+                                            <th>Power (kW)</th>
+                                            <th>Net Energy (MWh)</th>
+                                            <th>Net PLF (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="charts-tab-pane" role="tabpanel">
+                            <div class="chart-container">
+                                <canvas id="power-curve-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="data-sheet-section" class="content-section">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-file-earmark-spreadsheet"></i> Data Sheet</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Select Site:</label>
+                            <select class="form-select" id="data-sheet-site-select">
+                                <option value="">Select a site</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary ms-auto" id="download-data-sheet-btn">
+                                <i class="bi bi-download"></i> Download Excel
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped data-sheet-table" id="data-sheet-table">
+                            <thead>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="extrapolationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Wind Speed Extrapolation</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label for="extrapolation-height" class="form-label fw-bold">Target Height (m)</label>
+                        <input type="number" class="form-control" id="extrapolation-height" step="0.1" placeholder="Enter target height in meters">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Calculate Alpha From (select 2 heights):</label>
+                        <div id="height-checkboxes" class="row g-2">
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <strong>Calculated Alpha:</strong> <span id="alpha-value" class="fw-bold">-</span>
+                            <small class="d-block text-muted">Default value is 1/7 (0.1429) if not calculated</small>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="extrapolate-from" class="form-label fw-bold">Extrapolate From:</label>
+                        <select class="form-select" id="extrapolate-from">
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="extrapolate-btn">
+                        <i class="bi bi-calculator"></i> Extrapolate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/plugins/monthSelect/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <script>
+    // Global variable to store cached data sheet results
+    let cachedDataSheetResults = {};
+    $(document).ready(function() {
+        // Initialize date pickers
+        initializeDatePickers();
+        // Navigation button click handler
+        $(".nav-btn").click(function() {
+            // Remove active class from all buttons and sections
+            $(".nav-btn").removeClass("active");
+            $(".content-section").removeClass("active");
+            // Add active class to clicked button
+            $(this).addClass("active");
+            // Show corresponding section
+            const sectionId = $(this).data("section");
+            $("#" + sectionId).addClass("active");
+        });
+        // State checkboxes change handler
+        $(".state-checkbox").change(function() {
+            const state = $(this).val();
+            const isChecked = $(this).is(":checked");
+            if (isChecked) {
+                addStateContainer(state);
+            } else {
+                $(`#state-container-${state.replace(/\s+/g, '-')}`).remove();
+            }
+        });
+        // Add power curve dropdown
+        $(".add-power-curve-btn").click(function() {
+            addPowerCurveDropdown();
+        });
+        // Remove power curve dropdown
+        $(document).on('click', '.remove-power-curve-btn', function() {
+            $(this).closest('.power-curve-group').remove();
+        });
+        // Date range type change handler
+        $("input[name='date-range-type']").change(function() {
+            updateDateRangeInputs();
+        });
+        // Initialize with single day input
+        updateDateRangeInputs();
+        // Save loss factors
+        $("#save-loss-factors-btn").click(function() {
+            const lossFactors = {
+                machineAvailability: parseFloat($("#machine-availability").val()) || 0,
+                gridLosses: parseFloat($("#grid-losses").val()) || 0,
+                transmissionLosses: parseFloat($("#transmission-losses").val()) || 0,
+                Airdensitycorrection: parseFloat($("#airdensity-correction").val()) || 0,
+                Horizontalextrapolation: parseFloat($("#horizontal-extrapolation").val()) || 0,
+                otherLosses: parseFloat($("#other-losses").val()) || 0
+            };
+            // Send to server
+            $.ajax({
+                url: "/update_loss_factors",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(lossFactors),
+                success: function(response) {
+                    if (response.success) {
+                        showStatus("Loss factors saved successfully", "success");
+                        setTimeout(hideStatus, 2000);
+                    } else {
+                        showStatus(response.error || "Failed to update loss factors", "error");
+                    }
+                },
+                error: function() {
+                    showStatus("Error updating loss factors. Please try again.", "error");
+                }
+            });
+        });
+        // Process button click
+        $("#process-btn").click(function() {
+            processData();
+        });
+        // Show results button click
+        $("#show-results-btn").click(function() {
+            // Activate the results section
+            $(".nav-btn").removeClass("active");
+            $(".content-section").removeClass("active");
+            $(this).addClass("active");
+            $("#results-section").addClass("active");
+        });
+        // Show data sheet button click
+        $("#show-data-sheet-btn").click(function() {
+            showDataSheetModal();
+        });
+        // Data sheet site select change
+        $("#data-sheet-site-select").change(function() {
+            const selectedSite = $(this).val();
+            if (selectedSite) {
+                loadDataSheet(selectedSite);
+            }
+        });
+        // Download data sheet button click
+        $("#download-data-sheet-btn").click(function() {
+            downloadDataSheet();
+        });
+        // Initialize with current date
+        $(".single-day-input .date-input-single-day").val(getFormattedDate(new Date()));
+    });
+    function initializeDatePickers() {
+        // Single day input
+        flatpickr(".date-input-single-day", {
+            dateFormat: "d-m-Y",
+            defaultDate: "today"
+        });
+        // Monthly input
+        flatpickr(".date-input-monthly", {
+            plugins: [new monthSelectPlugin({
+                shorthand: true,
+                dateFormat: "m-Y",
+                altFormat: "F Y"
+            })],
+            defaultDate: "today"
+        });
+        // Yearly input
+        flatpickr(".date-input-yearly", {
+            plugins: [new monthSelectPlugin({
+                shorthand: true,
+                dateFormat: "Y",
+                altFormat: "Y"
+            })],
+            defaultDate: "today"
+        });
+        // Date range inputs
+        flatpickr(".date-input-range-start", {
+            dateFormat: "d-m-Y",
+            defaultDate: "today"
+        });
+        flatpickr(".date-input-range-end", {
+            dateFormat: "d-m-Y",
+            defaultDate: "today"
+        });
+    }
+    function addStateContainer(state) {
+    const stateId = state.replace(/\s+/g, '-');
+    if ($(`#state-container-${stateId}`).length) {
+        return; // Container already exists
+    }
+    const container = $(`
+        <div class="state-container mb-3" id="state-container-${stateId}">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6>${state}</h6>
+                    <button class="btn btn-sm btn-outline-danger remove-state-btn">×</button>
+                </div>
+                <div class="card-body">
+                    <div class="site-group">
+                        <div class="d-flex flex-nowrap align-items-center gap-2 mb-2">
+                            <select class="form-select flex-grow-1 mast-select" style="background-color: transparent; color: #000; border: 1px solid #ccc;">
+                                <option value="">Select Mast</option>
+                            </select>
+                            <select class="form-select flex-grow-1 speed-col-select" disabled style="background-color: transparent; color: #000; border: 1px solid #ccc;">
+                                <option value="">Select Speed Column</option>
+                            </select>
+                            <button class="btn btn-sm btn-outline-primary add-site-btn px-2" style="width: 32px; flex-shrink: 0;">+</button>
+                            <div class="form-check form-switch m-0 ps-0">
+                                <input class="form-check-input extrapolation-checkbox" type="checkbox" id="extrapolation-checkbox-${stateId}">
+                                <label class="form-check-label small ps-1" for="extrapolation-checkbox-${stateId}" title="Extrapolation">Ext</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `);
+    $("#state-containers").append(container);
+    // Load masts for this state
+    loadMasts(state, container.find(".mast-select"));
+    // Mast select change handler
+    container.find(".mast-select").change(function() {
+        const selectedMast = $(this).val();
+        const speedColSelect = $(this).closest(".d-flex").find(".speed-col-select");
+        if (selectedMast) {
+            loadSpeedColumns(state, selectedMast, speedColSelect);
+            speedColSelect.prop("disabled", false);
+        } else {
+            speedColSelect.prop("disabled", true).empty().append('<option value="">Select Speed Column</option>');
+        }
+    });
+        // Extrapolation checkbox handler
+        container.find(".extrapolation-checkbox").change(function() {
+            if ($(this).is(":checked")) {
+                const mastSelect = $(this).closest(".d-flex").find(".mast-select");
+                const speedColSelect = $(this).closest(".d-flex").find(".speed-col-select");
+                const mast = mastSelect.val();
+                const speedCol = speedColSelect.val();
+                if (mast && speedCol) {
+                    showExtrapolationModal(state, mast, speedCol);
+                } else {
+                    $(this).prop("checked", false);
+                    alert("Please select both a mast and a speed column first");
+                }
+            }
+        });
+        // Add site button handler
+container.find(".add-site-btn").click(function() {
+    const siteGroup = $(this).closest(".site-group");
+    const newSiteRow = $(`
+        <div class="d-flex flex-nowrap align-items-center gap-2 mb-2">
+            <select class="form-select mast-select" style="width: 100px; min-width: 80px; background-color: transparent; color: #000; border: 1px solid #ccc;">
+                <option value="">Select Mast</option>
+            </select>
+            <select class="form-select speed-col-select" disabled style="width: 100px; min-width: 80px; background-color: transparent; color: #000; border: 1px solid #ccc;">
+                <option value="">Select Speed Column</option>
+            </select>
+            <button class="btn btn-sm btn-outline-danger remove-site-btn px-2" style="width: 32px; flex-shrink: 0;">×</button>
+            <div class="form-check form-switch m-0 ps-0">
+                <input class="form-check-input extrapolation-checkbox" type="checkbox">
+                <label class="form-check-label small ps-1" title="Extrapolation">Ext</label>
+            </div>
+        </div>
+    `);
+            siteGroup.append(newSiteRow);
+            // Load masts for the new select
+            loadMasts(state, newSiteRow.find(".mast-select"));
+            // Mast select change handler for new row
+            newSiteRow.find(".mast-select").change(function() {
+                const selectedMast = $(this).val();
+                const speedColSelect = $(this).closest(".d-flex").find(".speed-col-select");
+                if (selectedMast) {
+                    loadSpeedColumns(state, selectedMast, speedColSelect);
+                    speedColSelect.prop("disabled", false);
+                } else {
+                    speedColSelect.prop("disabled", true).empty().append('<option value="">Select Speed Column</option>');
+                }
+            });
+            // Extrapolation checkbox handler for new row
+            newSiteRow.find(".extrapolation-checkbox").change(function() {
+                if ($(this).is(":checked")) {
+                    const mastSelect = $(this).closest(".d-flex").find(".mast-select");
+                    const speedColSelect = $(this).closest(".d-flex").find(".speed-col-select");
+                    const mast = mastSelect.val();
+                    const speedCol = speedColSelect.val();
+                    if (mast && speedCol) {
+                        showExtrapolationModal(state, mast, speedCol);
+                    } else {
+                        $(this).prop("checked", false);
+                        alert("Please select both a mast and a speed column first");
+                    }
+                }
+            });
+            // Remove site button handler
+            newSiteRow.find(".remove-site-btn").click(function(e) {
+                e.preventDefault();
+                $(this).closest(".d-flex").remove();
+            });
+        });
+        // Remove state button handler
+        container.find(".remove-state-btn").click(function() {
+            $(`#state-${state.replace(/\s+/g, '-')}`).prop("checked", false);
+            $(this).closest(".state-container").remove();
+        });
+    }
+    function loadMasts(state, selectElement) {
+        showStatus("Loading masts...");
+        $.ajax({
+            url: "/get_masts",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ state: state }),
+            success: function(response) {
+                hideStatus();
+                if (response.masts && response.masts.length > 0) {
+                    selectElement.empty().append('<option value="">Select Mast</option>');
+                    response.masts.forEach(mast => {
+                        selectElement.append(`<option value="${mast}">${mast}</option>`);
+                    });
+                } else {
+                    selectElement.empty().append('<option value="">No masts available</option>');
+                }
+            },
+            error: function() {
+                hideStatus();
+                selectElement.empty().append('<option value="">Error loading masts</option>');
+            }
+        });
+    }
+    function loadSpeedColumns(state, mast, selectElement) {
+        showStatus("Loading speed columns...");
+        $.ajax({
+            url: "/get_columns",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ 
+                state: state, 
+                mast: mast 
+            }),
+            success: function(response) {
+                hideStatus();
+                if (response.columns && response.columns.length > 0) {
+                    selectElement.empty().append('<option value="">Select Speed Column</option>');
+                    // Filter for speed columns only
+                    const speedColumns = response.columns.filter(col => 
+                        col.includes('Spd') && !col.includes('Dir') && !col.includes('Std')
+                    );
+                    if (speedColumns.length === 0) {
+                        selectElement.append('<option value="">No speed columns available</option>');
+                        return;
+                    }
+                    speedColumns.forEach(col => {
+                        selectElement.append(`<option value="${col}">${col}</option>`);
+                    });
+                } else {
+                    selectElement.empty().append('<option value="">No columns available</option>');
+                }
+            },
+            error: function() {
+                hideStatus();
+                selectElement.empty().append('<option value="">Error loading columns</option>');
+            }
+        });
+}
+    function showExtrapolationModal(state, mast, speedCol) {
+        // Reset modal
+        $("#extrapolation-height").val("");
+        $("#height-checkboxes").empty();
+        $("#alpha-value").text("-");
+        $("#extrapolate-from").empty().append('<option value="">Select Column</option>');
+        showStatus("Preparing extrapolation...");
+        // Load speed columns for this mast to populate checkboxes and dropdown
+        $.ajax({
+            url: "/get_columns",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ state: state, mast: mast }),
+            success: function(response) {
+                hideStatus();
+                if (!response.columns || response.columns.length === 0) {
+                    alert("No speed columns available for this mast");
+                    return;
+                }
+                // Populate height checkboxes
+                response.columns.forEach(col => {
+                    if (col.includes("Spd")) {
+                        const heightMatch = col.match(/Spd\s(\d+)m/);
+                        if (heightMatch) {
+                            const height = heightMatch[1];
+                            $("#height-checkboxes").append(`
+                                <div class="form-check">
+                                    <input class="form-check-input height-checkbox" type="checkbox" id="height-${height}" value="${col}">
+                                    <label class="form-check-label" for="height-${height}">${col}</label>
+                                </div>
+                            `);
+                        }
+                    }
+                });
+                // Populate extrapolate from dropdown
+                response.columns.forEach(col => {
+                    if (col.includes("Spd")) {
+                        $("#extrapolate-from").append(`<option value="${col}">${col}</option>`);
+                    }
+                });
+                // Add the current speed column if not already present
+                if (!$(`#extrapolate-from option[value="${speedCol}"]`).length && speedCol.includes("Spd")) {
+                    $("#extrapolate-from").append(`<option value="${speedCol}">${speedCol}</option>`);
+                }
+                // Set the current speed column as selected
+                $("#extrapolate-from").val(speedCol);
+                // Height checkbox change handler
+                $(".height-checkbox").change(function() {
+                    const checkedBoxes = $(".height-checkbox:checked");
+                    if (checkedBoxes.length === 2) {
+                        // Get the two selected columns
+                        const col1 = checkedBoxes[0].value;
+                        const col2 = checkedBoxes[1].value;
+                        // Extract heights from column names
+                        const h1 = parseFloat(col1.match(/Spd\s(\d+)m/)[1]);
+                        const h2 = parseFloat(col2.match(/Spd\s(\d+)m/)[1]);
+                        // Get the mast and state from the modal data
+                        const state = $("#extrapolationModal").data("state");
+                        const mast = $("#extrapolationModal").data("mast");
+                        // Get mean wind speeds for these columns
+                        showStatus("Calculating alpha...");
+                        $.ajax({
+                            url: "/extrapolate",
+                            method: "POST",
+                            contentType: "application/json",
+                            data: JSON.stringify({
+                                state: state,
+                                mast: mast,
+                                speed_col: col1,
+                                target_height: h2,  // Not used for alpha calculation
+                                selected_heights: [col1, col2],
+                                extrapolate_from: col1  // Not used for alpha calculation
+                            }),
+                            success: function(response) {
+                                hideStatus();
+                                if (response.success && response.alpha !== undefined) {
+                                    $("#alpha-value").text(response.alpha.toFixed(4));
+                                } else {
+                                    $("#alpha-value").text("1/7 (default)");
+                                    if (response.error) {
+                                        console.error(response.error);
+                                    }
+                                }
+                            },
+                            error: function() {
+                                hideStatus();
+                                $("#alpha-value").text("Error calculating");
+                            }
+                        });
+                    } else {
+                        $("#alpha-value").text("-");
+                    }
+                });
+                // Show modal
+                $("#extrapolationModal").data("state", state)
+                                      .data("mast", mast)
+                                      .data("speedCol", speedCol)
+                                      .modal("show");
+            },
+            error: function() {
+                hideStatus();
+                alert("Error loading speed columns. Please try again.");
+            }
+        });
+    }
+    function addPowerCurveDropdown() {
+        const container = $("#power-curve-container");
+        const newGroup = $(`
+            <div class="power-curve-group mb-2 d-flex">
+                <select class="form-select power-curve-select me-2">
+                    <option value="">Select Power Curve</option>
+                    {% for curve in power_curves %}
+                    <option value="{{ curve }}">{{ curve }}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-sm btn-outline-danger remove-power-curve-btn">×</button>
+            </div>
+        `);
+        container.append(newGroup);
+    }
+    function updateDateRangeInputs() {
+        const dateRangeType = $("input[name='date-range-type']:checked").attr("id");
+        const inputsContainer = $("#date-range-inputs");
+        inputsContainer.empty();
+        switch(dateRangeType) {
+            case "single-day":
+                inputsContainer.append(`
+                    <div class="single-day-input">
+                        <input type="text" class="form-control date-input-single-day" placeholder="DD-MM-YYYY">
+                    </div>
+                `);
+                flatpickr(".date-input-single-day", {
+                    dateFormat: "d-m-Y",
+                    defaultDate: "today"
+                });
+                break;
+            case "monthly":
+                inputsContainer.append(`
+                    <div class="monthly-input">
+                        <input type="text" class="form-control date-input-monthly" placeholder="MM-YYYY">
+                    </div>
+                `);
+                flatpickr(".date-input-monthly", {
+                    plugins: [new monthSelectPlugin({
+                        shorthand: true,
+                        dateFormat: "m-Y",
+                        altFormat: "F Y"
+                    })],
+                    defaultDate: "today"
+                });
+                break;
+            case "yearly":
+                inputsContainer.append(`
+                    <div class="yearly-input">
+                        <input type="text" class="form-control date-input-yearly" placeholder="YYYY">
+                    </div>
+                `);
+                flatpickr(".date-input-yearly", {
+                    plugins: [new monthSelectPlugin({
+                        shorthand: true,
+                        dateFormat: "Y",
+                        altFormat: "Y"
+                    })],
+                    defaultDate: "today"
+                });
+                break;
+            case "date-range":
+                inputsContainer.append(`
+                    <div class="date-range-input">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Start Date</label>
+                                <input type="text" class="form-control date-input-range-start" placeholder="DD-MM-YYYY">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">End Date</label>
+                                <input type="text" class="form-control date-input-range-end" placeholder="DD-MM-YYYY">
+                            </div>
+                        </div>
+                    </div>
+                `);
+                flatpickr(".date-input-range-start", {
+                    dateFormat: "d-m-Y",
+                    defaultDate: "today"
+                });
+                flatpickr(".date-input-range-end", {
+                    dateFormat: "d-m-Y",
+                    defaultDate: "today"
+                });
+                break;
+            case "average":
+                inputsContainer.append(`
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Will calculate average of all available data (excluding partial years)
+                    </div>
+                `);
+                break;
+        }
+    }
+    function getFormattedDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
+    function processData() {
+        // Get selected power curves
+        const powerCurves = [];
+    $(".power-curve-select").each(function() {
+        const val = $(this).val();
+        if (val) powerCurves.push(val);
+    });
+    if (powerCurves.length === 0) {
+        showStatus("Please select at least one power curve", "error");
+        return;
+    }
+    // Get selected sites - improved selection logic
+    const selectedSites = [];
+    $(".state-container").each(function() {
+        const state = $(this).find(".card-header h6").text().trim();
+        $(this).find(".site-group > .d-flex").each(function() {
+            const mastSelect = $(this).find(".mast-select");
+            const speedColSelect = $(this).find(".speed-col-select");
+            const mast = mastSelect.val();
+            const speedCol = speedColSelect.val();
+            if (mast && mast !== "" && speedCol && speedCol !== "") {
+                selectedSites.push({
+                    state: state,
+                    mast: mast,
+                    speed_col: speedCol,
+                    is_extrapolated: $(this).find(".extrapolation-checkbox").is(":checked")
+                });
+            }
+        });
+    });
+    if (selectedSites.length === 0) {
+        showStatus("Please select at least one mast and speed column", "error");
+        return;
+    }
+        // Get date range
+        const dateRangeType = $("input[name='date-range-type']:checked").attr('id');
+        let dateRange = {};
+        let validDate = true;
+        switch(dateRangeType) {
+            case "single-day":
+                const singleDate = $(".single-day-input .date-input-single-day").val();
+                if (!singleDate) {
+                    alert("Please select a date");
+                    validDate = false;
+                } else {
+                    dateRange = {
+                        type: "single_day",
+                        value: singleDate
+                    };
+                }
+                break;
+            case "monthly":
+                const monthlyDate = $(".monthly-input .date-input-monthly").val();
+                if (!monthlyDate) {
+                    alert("Please select a month and year");
+                    validDate = false;
+                } else {
+                    dateRange = {
+                        type: "monthly",
+                        value: monthlyDate
+                    };
+                }
+                break;
+            case "yearly":
+                const yearlyDate = $(".yearly-input .date-input-yearly").val();
+                if (!yearlyDate) {
+                    alert("Please select a year");
+                    validDate = false;
+                } else {
+                    dateRange = {
+                        type: "yearly",
+                        value: yearlyDate
+                    };
+                }
+                break;
+            case "date-range":
+                const startDate = $(".date-input-range-start").val();
+                const endDate = $(".date-input-range-end").val();
+                if (!startDate || !endDate) {
+                    alert("Please select both start and end dates");
+                    validDate = false;
+                } else {
+                    // Convert dates to Date objects for comparison
+                    const startParts = startDate.split('-');
+                    const endParts = endDate.split('-');
+                    const startDateObj = new Date(startParts[2], startParts[1]-1, startParts[0]);
+                    const endDateObj = new Date(endParts[2], endParts[1]-1, endParts[0]);
+                    if (startDateObj > endDateObj) {
+                        alert("End date must be after start date");
+                        validDate = false;
+                    } else {
+                        dateRange = {
+                            type: "date_range",
+                            start: startDate,
+                            end: endDate
+                        };
+                    }
+                }
+                break;
+            case "average":
+                dateRange = {
+                    type: "average"
+                };
+                break;
+        }
+        if (!validDate) {
+            return;
+        }
+        // Show loading indicator
+        const processBtn = $("#process-btn");
+        processBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
+        processBtn.prop("disabled", true);
+        showProgress(0);
+        showStatus("Processing data...");
+        // Send data to server
+        $.ajax({
+            url: "/process",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                date_range: dateRange,
+                selected_sites: selectedSites,
+                power_curves: powerCurves
+            }),
+            xhr: function() {
+                const xhr = new window.XMLHttpRequest();
+                xhr.addEventListener("progress", function(evt) {
+                    if (evt.lengthComputable) {
+                        const percentComplete = evt.loaded / evt.total * 100;
+                        showProgress(percentComplete);
+                    }
+                }, false);
+                return xhr;
+            },
+            success: function(response) {
+                processBtn.html('<i class="bi bi-gear"></i> Process Data');
+                processBtn.prop("disabled", false);
+                hideProgress();
+                hideStatus();
+                if (response.success) {
+                    displayResults(response.results);
+                    // Store data sheet results for later use
+                    cachedDataSheetResults = response.data_sheet_results || {};
+                    $("#show-results-btn").prop("disabled", false);
+                    $("#show-data-sheet-btn").prop("disabled", false);
+                } else {
+                    alert(response.error || "Error processing data");
+                }
+            },
+            error: function() {
+                processBtn.html('<i class="bi bi-gear"></i> Process Data');
+                processBtn.prop("disabled", false);
+                hideProgress();
+                hideStatus();
+                alert("Error processing data. Please try again.");
+            }
+        });
+    }
+    function displayResults(results) {
+        // Clear previous results
+        $("#results-table tbody").empty();
+        $("#monthly-table tbody").empty();
+        if (!results || results.length === 0) {
+            $("#results-table tbody").append('<tr><td colspan="14" class="text-center">No results found</td></tr>');
+            return;
+        }
+        // Group results by state-mast-speedcol for table display
+        const groupedResults = {};
+        results.forEach(result => {
+            const key = `${result.state}-${result.mast}-${result.speed_col}`;
+            if (!groupedResults[key]) {
+                groupedResults[key] = {
+                    state: result.state,
+                    mast: result.mast,
+                    mast_id: result.mast_id || '',
+                    speed_col: result.speed_col,
+                    curves: []
+                };
+            }
+            groupedResults[key].curves.push(result);
+        });
+        // Populate main results table
+        Object.values(groupedResults).forEach(group => {
+            group.curves.forEach((result, idx) => {
+                // Calculate yearly averages from monthly stats
+                let yearlyAvgPower = 0;
+                let yearlyGrossEnergy = 0;
+                let yearlyNetEnergy = 0;
+                let yearlyGrossPLF = 0;
+                let yearlyNetPLF = 0;
+                let validMonths = 0;
+                if (result.monthly_stats && result.monthly_stats.length > 0) {
+                    result.monthly_stats.forEach(month => {
+                        if (month.month <= 12) { // Exclude yearly summary if present
+                            yearlyAvgPower += month.avg_power || 0;
+                            yearlyGrossEnergy += month.gross_energy || 0;
+                            yearlyNetEnergy += month.net_energy || 0;
+                            yearlyGrossPLF += month.gross_plf || 0;
+                            yearlyNetPLF += month.net_plf || 0;
+                            validMonths++;
+                        }
+                    });
+                    if (validMonths > 0) {
+                        yearlyAvgPower = yearlyAvgPower / validMonths;
+                        yearlyGrossPLF = yearlyGrossPLF / validMonths;
+                        yearlyNetPLF = yearlyNetPLF / validMonths;
+                    }
+                }
+                const row = `
+                    <tr>
+                        ${idx === 0 ? `<td rowspan="${group.curves.length}">${result.state}</td>` : ''}
+                        ${idx === 0 ? `<td rowspan="${group.curves.length}">${result.mast}</td>` : ''}
+                        ${idx === 0 ? `<td rowspan="${group.curves.length}">${result.speed_col}</td>` : ''}
+                        <td>${result.power_curve}</td>
+                        <td>${result.avg_wind_speed ? result.avg_wind_speed.toFixed(2) : '-'}</td>
+                        <td>${result.std_dev ? result.std_dev.toFixed(2) : '-'}</td>
+                        <td>${result.weibull_shape ? result.weibull_shape.toFixed(2) : '-'}</td>
+                        <td>${result.weibull_scale ? result.weibull_scale.toFixed(2) : '-'}</td>
+                        <td>${result.mean_monthly_mean ? result.mean_monthly_mean.toFixed(2) : '-'}</td>
+                        <td>${yearlyAvgPower ? yearlyAvgPower.toFixed(2) : '-'}</td>
+                        <td>${yearlyGrossEnergy ? yearlyGrossEnergy.toFixed(2) : '-'}</td>
+                        <td>${yearlyNetEnergy ? yearlyNetEnergy.toFixed(2) : '-'}</td>
+                        <td>${yearlyGrossPLF ? yearlyGrossPLF.toFixed(2) : '-'}%</td>
+                        <td>${yearlyNetPLF ? yearlyNetPLF.toFixed(2) : '-'}%</td>
+                    </tr>
+                `;
+                $("#results-table tbody").append(row);
+            });
+        });
+        // Create power curve chart with all selected curves
+        createPowerCurveChart(results);
+        // Display monthly results for all 12 months
+        displayMonthlyResults(results);
+    }
+    function displayMonthlyResults(results) {
+        const monthNames = ["January", "February", "March", "April", "May", "June", 
+                           "July", "August", "September", "October", "November", "December"];
+        // Clear previous table
+        $("#monthly-table tbody").empty();
+        // Create data rows for all 12 months
+        for (let monthIdx = 0; monthIdx < 12; monthIdx++) {
+            const monthNumber = monthIdx + 1;
+            const monthName = monthNames[monthIdx];
+            results.forEach(result => {
+                const monthData = result.monthly_stats.find(m => m.month === monthNumber);
+                const row = `
+                    <tr>
+                        <td>${monthName}</td>
+                        <td>${result.mast}</td>
+                        <td>${result.power_curve}</td>
+                        <td>${monthData?.avg_power ? monthData.avg_power.toFixed(2) : '0.00'}</td>
+                        <td>${monthData?.net_energy ? monthData.net_energy.toFixed(2) : '0.00'}</td>
+                        <td>${monthData?.net_plf ? monthData.net_plf.toFixed(2) : '0.00'}%</td>
+                    </tr>
+                `;
+                $("#monthly-table tbody").append(row);
+            });
+        }
+        // Add yearly average row
+        results.forEach(result => {
+            // Calculate yearly averages
+            let yearlyAvgPower = 0;
+            let yearlyNetEnergy = 0;
+            let yearlyNetPLF = 0;
+            let validMonths = 0;
+            result.monthly_stats.forEach(month => {
+                if (month.month <= 12) { // Exclude yearly summary if present
+                    yearlyAvgPower += month.avg_power || 0;
+                    yearlyNetEnergy += month.net_energy || 0;
+                    yearlyNetPLF += month.net_plf || 0;
+                    validMonths++;
+                }
+            });
+            if (validMonths > 0) {
+                yearlyAvgPower = yearlyAvgPower / validMonths;
+                yearlyNetPLF = yearlyNetPLF / validMonths;
+            }
+            const row = `
+                <tr class="yearly-average-row">
+                    <td><strong>Yearly Average</strong></td>
+                    <td>${result.mast}</td>
+                    <td>${result.power_curve}</td>
+                    <td><strong>${yearlyAvgPower.toFixed(2)}</strong></td>
+                    <td><strong>${yearlyNetEnergy.toFixed(2)}</strong></td>
+                    <td><strong>${yearlyNetPLF.toFixed(2)}%</strong></td>
+                </tr>
+            `;
+            $("#monthly-table tbody").append(row);
+        });
+    }
+    function createPowerCurveChart(results) {
+        // Get unique power curves from results
+        const powerCurves = {};
+        results.forEach(result => {
+            if (!powerCurves[result.power_curve]) {
+                powerCurves[result.power_curve] = {
+                    rated_power: result.rated_power || 3000
+                };
+            }
+        });
+        // Load all power curve data
+        const datasets = [];
+        const colors = ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f', '#edc948', '#b07aa1'];
+        let colorIndex = 0;
+        for (const [curveName, curveData] of Object.entries(powerCurves)) {
+            // In a real app, you would fetch the actual power curve data from the server
+            // For this demo, we'll use sample data
+            const sampleData = {
+                "Wind Speed (m/s)": [3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5],
+                "Power Output (kW)": Array.from({length: 26}, (_, i) => {
+                    const speed = 3 + i * 0.5;
+                    return speed < 15 ? Math.min(curveData.rated_power, speed * speed * speed * 2) : curveData.rated_power;
+                })
+            };
+            datasets.push({
+                label: `${curveName} (${curveData.rated_power} kW)`,
+                data: sampleData["Power Output (kW)"],
+                borderColor: colors[colorIndex % colors.length],
+                backgroundColor: colors[colorIndex % colors.length],
+                tension: 0.1,
+                fill: false
+            });
+            colorIndex++;
+        }
+        const ctx = document.getElementById('power-curve-chart').getContext('2d');
+        if (window.powerCurveChart) {
+            window.powerCurveChart.destroy();
+        }
+        window.powerCurveChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 26}, (_, i) => (3 + i * 0.5).toFixed(1)),
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Power Curves Comparison'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw} kW at ${context.label} m/s`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Wind Speed (m/s)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Power Output (kW)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    function showDataSheetModal() {
+        // Get selected sites
+        const selectedSites = [];
+        $(".state-container").each(function() {
+            const state = $(this).find(".card-header h6").text();
+            $(this).find(".site-group > .d-flex").each(function() {
+                const mast = $(this).find(".mast-select").val();
+                const speedCol = $(this).find(".speed-col-select").val();
+                if (mast && speedCol) {
+                    selectedSites.push({
+                        state: state,
+                        mast: mast
+                    });
+                }
+            });
+        });
+        if (selectedSites.length === 0) {
+            alert("Please select at least one mast and speed column");
+            return;
+        }
+        // Populate site dropdown
+        const siteSelect = $("#data-sheet-site-select");
+        siteSelect.empty().append('<option value="">Select a site</option>');
+        selectedSites.forEach(site => {
+            siteSelect.append(`<option value="${site.state}|${site.mast}">${site.state} - ${site.mast}</option>`);
+        });
+        // Clear previous data
+        $("#data-sheet-table thead").empty();
+        $("#data-sheet-table tbody").empty();
+        // Activate the data sheet section
+        $(".nav-btn").removeClass("active");
+        $(".content-section").removeClass("active");
+        $("#show-data-sheet-btn").addClass("active");
+        $("#data-sheet-section").addClass("active");
+    }
+    function loadDataSheet(selectedSite) {
+        // Check if we have cached results
+        if (cachedDataSheetResults[selectedSite]) {
+            displayDataSheet(cachedDataSheetResults[selectedSite]);
+            return;
+        }
+        const [state, mast] = selectedSite.split("|");
+        // Show loading
+        const table = $("#data-sheet-table");
+        table.find("tbody").html('<tr><td colspan="20" class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>');
+        // Get date range type
+        const dateRangeType = $("input[name='date-range-type']:checked").attr("id");
+        let dateRange = {};
+        switch(dateRangeType) {
+            case "single-day":
+                const singleDate = $(".single-day-input .date-input-single-day").val();
+                dateRange = {
+                    type: "single_day",
+                    value: singleDate
+                };
+                break;
+            case "monthly":
+                const monthlyDate = $(".monthly-input .date-input-monthly").val();
+                dateRange = {
+                    type: "monthly",
+                    value: monthlyDate
+                };
+                break;
+            case "yearly":
+                const yearlyDate = $(".yearly-input .date-input-yearly").val();
+                dateRange = {
+                    type: "yearly",
+                    value: yearlyDate
+                };
+                break;
+            case "date-range":
+                const startDate = $(".date-input-range-start").val();
+                const endDate = $(".date-input-range-end").val();
+                dateRange = {
+                    type: "date_range",
+                    start: startDate,
+                    end: endDate
+                };
+                break;
+            case "average":
+                dateRange = {
+                    type: "average"
+                };
+                break;
+        }
+        // Get power curves
+        const powerCurves = [];
+        $(".power-curve-select").each(function() {
+            const val = $(this).val();
+            if (val) powerCurves.push(val);
+        });
+        showStatus("Loading data sheet...");
+        // Send request to server
+        $.ajax({
+            url: "/get_data_sheet",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                state: state,
+                mast: mast,
+                date_range: dateRange,
+                power_curves: powerCurves
+            }),
+            success: function(response) {
+                hideStatus();
+                if (response.success) {
+                    displayDataSheet(response.data);
+                } else {
+                    table.find("tbody").html('<tr><td colspan="20" class="text-center text-danger">No valid data found for the selected site</td></tr>');
+                    alert(response.error || "Error loading data sheet");
+                }
+            },
+            error: function() {
+                hideStatus();
+                table.find("tbody").html('<tr><td colspan="20" class="text-center text-danger">Error loading data sheet</td></tr>');
+                alert("Error loading data sheet. Please try again.");
+            }
+        });
+    }
+    function displayDataSheet(data) {
+        const table = $("#data-sheet-table");
+        table.find("thead").empty();
+        table.find("tbody").empty();
+        if (!data || data.length === 0) {
+            table.find("tbody").html('<tr><td colspan="20" class="text-center">No data available</td></tr>');
+            return;
+        }
+        // Create headers
+        const headers = ['Year', 'Month'];
+        const paramHeaders = Object.keys(data[0].parameters);
+        // Add parameter headers
+        headers.push(...paramHeaders);
+        // Add power curve headers for each height
+        const powerCurveHeaders = [];
+        if (data[0]['energy']) {
+            const unique_pcs = [...new Set(data[0]['energy'].map(e => e.power_curve))];
+            const unique_heights = [...new Set(data[0]['energy'].map(e => e.height))];
+            for (const pc of unique_pcs) {
+                for (const height of unique_heights) {
+                    powerCurveHeaders.push(`${pc} ${height}m Power (kW)`);
+                    powerCurveHeaders.push(`${pc} ${height}m Net Energy (kWh)`);
+                    powerCurveHeaders.push(`${pc} ${height}m Net PLF (%)`);
+                }
+            }
+        }
+        headers.push(...powerCurveHeaders);
+        // Create header row
+        const headerRow = $('<tr></tr>');
+        headers.forEach(header => {
+            headerRow.append(`<th class="text-center">${header}</th>`);
+        });
+        table.find("thead").append(headerRow);
+        // Get state and mast from the selected site
+        const selectedSite = $("#data-sheet-site-select").val();
+        const [state, mast] = selectedSite.split("|");
+        // Add state and mast info row
+        const infoRow = $('<tr class="table-info"></tr>');
+        infoRow.append(`<td colspan="2" class="text-center"><strong>State:</strong> ${state}</td>`);
+        infoRow.append(`<td colspan="${headers.length - 2}" class="text-center"><strong>Mast:</strong> ${mast}</td>`);
+        table.find("tbody").append(infoRow);
+        // Create data rows
+        data.forEach(rowData => {
+            const row = $('<tr></tr>');
+            // Add year and month
+            row.append(`<td class="text-center">${rowData.year || ''}</td>`);
+            row.append(`<td class="text-center">${rowData.month_name || ''}</td>`);
+            // Add parameter values
+            paramHeaders.forEach(param => {
+                const value = rowData.parameters[param];
+                if (typeof value === 'number') {
+                    row.append(`<td class="text-center">${value.toFixed(2)}</td>`);
+                } else {
+                    row.append(`<td class="text-center">${value || ''}</td>`);
+                }
+            });
+            // Add power curve values
+            if (rowData['energy']) {
+                // Group energy data by power curve and height
+                const energy_data = {};
+                for (const e of rowData['energy']) {
+                    const key = `${e.power_curve}_${e.height}`;
+                    if (!energy_data[key]) {
+                        energy_data[key] = e;
+                    }
+                }
+                // Get unique power curves and heights again to maintain order
+                const unique_pcs = [...new Set(data[0]['energy'].map(e => e.power_curve))];
+                const unique_heights = [...new Set(data[0]['energy'].map(e => e.height))];
+                // Add values in consistent order
+                for (const pc of unique_pcs) {
+                    for (const height of unique_heights) {
+                        const key = `${pc}_${height}`;
+                        if (energy_data[key]) {
+                            row.append(`<td class="text-center">${energy_data[key].avg_power.toFixed(2)}</td>`);
+                            row.append(`<td class="text-center">${energy_data[key].net_energy.toFixed(2)}</td>`);
+                            row.append(`<td class="text-center">${energy_data[key].net_plf.toFixed(2)}%</td>`);
+                        } else {
+                            row.append('<td class="text-center">0.00</td><td class="text-center">0.00</td><td class="text-center">0.00%</td>');
+                        }
+                    }
+                }
+            }
+            table.find("tbody").append(row);
+        });
+    }
+    function downloadDataSheet() {
+        const selectedSite = $("#data-sheet-site-select").val();
+        if (!selectedSite) {
+            alert("Please select a site first");
+            return;
+        }
+        const [state, mast] = selectedSite.split("|");
+        // Get date range in the same format as processData()
+        const dateRangeType = $("input[name='date-range-type']:checked").attr("id");
+        let dateRange = { type: dateRangeType };
+        switch(dateRangeType) {
+            case "single-day":
+                dateRange.value = $(".single-day-input .date-input-single-day").val();
+                break;
+            case "monthly":
+                dateRange.value = $(".monthly-input .date-input-monthly").val();
+                break;
+            case "yearly":
+                dateRange.value = $(".yearly-input .date-input-yearly").val();
+                break;
+            case "date-range":
+                dateRange.start = $(".date-input-range-start").val();
+                dateRange.end = $(".date-input-range-end").val();
+                break;
+        }
+        // Get power curves
+        const powerCurves = [];
+        $(".power-curve-select").each(function() {
+            const val = $(this).val();
+            if (val) powerCurves.push(val);
+        });
+        // Prepare request data
+        const requestData = {
+            state: state,
+            mast: mast,
+            date_range: dateRange,
+            power_curves: powerCurves
+        };
+        // If we have cached results, send them to avoid recalculation
+        if (cachedDataSheetResults[selectedSite]) {
+            requestData.data = cachedDataSheetResults[selectedSite];
+        }
+        // Show loading
+        const downloadBtn = $("#download-data-sheet-btn");
+        downloadBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Preparing...');
+        downloadBtn.prop("disabled", true);
+        showProgress(0);
+        showStatus("Preparing Excel download...");
+        // Send request to server
+        $.ajax({
+            url: "/download_data_sheet",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(requestData),
+            xhr: function() {
+                const xhr = new window.XMLHttpRequest();
+                xhr.addEventListener("progress", function(evt) {
+                    if (evt.lengthComputable) {
+                        const percentComplete = evt.loaded / evt.total * 100;
+                        showProgress(percentComplete);
+                    }
+                }, false);
+                return xhr;
+            },
+            success: function(response) {
+                downloadBtn.html('<i class="bi bi-download"></i> Download Excel');
+                downloadBtn.prop("disabled", false);
+                hideProgress();
+                hideStatus();
+                if (response.success && response.file_data) {
+                    // Create download link
+                    const byteCharacters = atob(response.file_data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = response.filename || `${state}_${mast}_wind_data_analysis.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } else {
+                    alert(response.error || "Error preparing download");
+                }
+            },
+            error: function() {
+                downloadBtn.html('<i class="bi bi-download"></i> Download Excel');
+                downloadBtn.prop("disabled", false);
+                hideProgress();
+                hideStatus();
+                alert("Error preparing download. Please try again.");
+            }
+        });
+    }
+    // Extrapolate button click handler
+    $("#extrapolate-btn").click(function() {
+        const modal = $("#extrapolationModal");
+        const state = modal.data("state");
+        const mast = modal.data("mast");
+        const speedCol = modal.data("speedCol");
+        const targetHeight = parseFloat($("#extrapolation-height").val());
+        const extrapolateFrom = $("#extrapolate-from").val();
+        if (!targetHeight || targetHeight <= 0) {
+            alert("Please enter a valid target height");
+            return;
+        }
+        if (!extrapolateFrom) {
+            alert("Please select a column to extrapolate from");
+            return;
+        }
+        // Get selected height checkboxes
+        const selectedHeights = [];
+        $(".height-checkbox:checked").each(function() {
+            selectedHeights.push($(this).val());
+        });
+        // Show loading
+        const extrapolateBtn = $("#extrapolate-btn");
+        extrapolateBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Extrapolating...');
+        extrapolateBtn.prop("disabled", true);
+        showStatus("Extrapolating wind speeds...");
+        // Send to server
+        $.ajax({
+            url: "/extrapolate",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                state: state,
+                mast: mast,
+                speed_col: speedCol,
+                target_height: targetHeight,
+                selected_heights: selectedHeights,
+                extrapolate_from: extrapolateFrom
+            }),
+            success: function(response) {
+                extrapolateBtn.html('<i class="bi bi-calculator"></i> Extrapolate');
+                extrapolateBtn.prop("disabled", false);
+                hideStatus();
+                if (!response.success) {
+                    alert(response.error || "Extrapolation failed");
+                    return;
+                }
+                // Update alpha value display
+                if (response.alpha !== undefined) {
+                    $("#alpha-value").text(response.alpha.toFixed(4));
+                } else {
+                    $("#alpha-value").text("1/7 (default)");
+                }
+                // Add the new column to the speed column dropdown
+                const speedColSelect = $(`#state-container-${state.replace(/\s+/g, '-')} select.speed-col-select`);
+                if (!speedColSelect.find(`option[value="${response.new_column}"]`).length) {
+                    speedColSelect.append(`<option value="${response.new_column}">${response.new_column}</option>`);
+                }
+                // Select the new column
+                speedColSelect.val(response.new_column);
+                // Close modal
+                $("#extrapolationModal").modal("hide");
+            },
+            error: function() {
+                extrapolateBtn.html('<i class="bi bi-calculator"></i> Extrapolate');
+                extrapolateBtn.prop("disabled", false);
+                hideStatus();
+                alert("Error during extrapolation. Please try again.");
+            }
+        });
+    });
+    function showProgress(percent) {
+        $("#progressBar").css("width", percent + "%");
+        $(".progress-container").show();
+    }
+    function hideProgress() {
+        $(".progress-container").hide();
+        $("#progressBar").css("width", "0%");
+    }
+    function showStatus(message, type = "info") {
+        const statusMessage = $("#statusMessage");
+        statusMessage.text(message).show();
+        // Set color based on type
+        if (type === "error") {
+            statusMessage.css("background-color", "#e74c3c");
+        } else if (type === "success") {
+            statusMessage.css("background-color", "#2ecc71");
+        } else {
+            statusMessage.css("background-color", "#2c3e50");
+        }
+    }
+    function hideStatus() {
+        $("#statusMessage").hide();
+    }
+    </script>
+</body>
+{% endblock %}

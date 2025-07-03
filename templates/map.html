@@ -1,0 +1,683 @@
+{% extends "base.html" %}
+{% block title %}Mast Dashboard{% endblock %}
+{% block content %} 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background-color: transparent;
+        }
+        #map-container {
+            display: flex;
+            height: 100vh;
+            background-color: transparent;
+        }
+        #map {
+            flex: 1;
+            height: 90%;
+            z-index: 1;
+            background-color: transparent;
+        }
+        #sidebar {
+            width: 400px;
+            background: transparent;
+            border-left: 1px solid #ddd;
+            overflow-y: auto;
+            padding: 5px;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+        }
+        .sidebar-header {
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        #file-list {
+            list-style: none;
+            padding: 0;
+        }
+        #file-list li {
+            margin-bottom: 5px;
+            background: transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            border-left: 3px solid #0d6efd;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+        }
+        .file-icon {
+            margin-right: 10px;
+            width: 16px;
+            text-align: center;
+        }
+        .folder-list {
+            list-style: none;
+            padding-left: 20px;
+            margin-top: 5px;
+        }
+        .folder-item {
+            padding: 5px;
+            display: flex;
+            align-items: center;
+        }
+        .subfolder-list {
+            list-style: none;
+            padding-left: 20px;
+        }
+        .location-list {
+            list-style: none;
+            padding-left: 20px;
+        }
+        .modal-lg {
+            max-width: 800px;
+        }
+        .modal-content {
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+        .modal-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #dee2e6;
+            background-color: #66cbfa;
+            color:black;
+            border-radius: 10px 10px 0 0;
+        }
+        .modal-body {
+            padding: 1.5rem;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .modal-footer {
+            border-top: 1px solid #dee2e6;
+            border-radius: 0 0 10px 10px;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .table th {
+            white-space: nowrap;
+            width: 30%;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        .mast-tooltip {
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 2px 5px;
+        }
+        .state-label {
+            font-weight: bold;
+            font-size: 12px;
+            color: #333;
+            text-shadow: 1px 1px 1px white;
+            pointer-events: none;
+        }
+        .state-boundary {
+            fill: none;
+            stroke: #555;
+            stroke-width: 5;
+            stroke-linejoin: round;
+        }
+    </style>
+    <div id="map-container">
+        <div id="map"></div>
+        <div id="sidebar">
+            <div class="sidebar-header">
+                <h3>Mast Locations</h3>
+            </div>
+            <ul id="file-list"></ul>
+        </div>
+    </div>
+    <div class="modal fade" id="mastModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mastModalTitle">Mast Summary</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="mastModalBody">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/togeojson/0.16.0/togeojson.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the map
+            const map = L.map('map', {
+                center: [20.5937, 78.9629],
+                zoom: 5,
+                preferCanvas: true
+            });
+            // Modified code (Satellite as default)
+const cleanMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19
+});
+const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    maxZoom: 19
+}).addTo(map);  // <-- Now Satellite is the default
+            // State boundaries
+            const stateBoundariesLayer = L.geoJson(null, {
+                style: {
+                    color: '#555',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.1
+                }
+            }).addTo(map);
+            // Load state boundaries
+            fetch('https://raw.githubusercontent.com/geohacker/india/master/state/india_state.geojson')
+                .then(response => response.json())
+                .then(data => {
+                    stateBoundariesLayer.addData(data);
+                    // Add state labels
+                    data.features.forEach(feature => {
+                        const stateName = feature.properties.NAME_1;
+                        try {
+                            const centroid = L.geoJSON(feature).getBounds().getCenter();
+                            L.marker(centroid, {
+                                icon: L.divIcon({
+                                    className: 'state-label',
+                                    html: stateName,
+                                    iconSize: [100, 20]
+                                }),
+                                interactive: false
+                            }).addTo(map);
+                        } catch (e) {
+                            console.log("Could not add label for", stateName, e);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error("Error loading state boundaries:", error);
+                });
+            // Layer control
+            L.control.layers({
+                "Clean Map": cleanMapLayer,
+                "Satellite": satelliteLayer
+            }, null, {position: 'bottomright'}).addTo(map);
+            // Modal
+            const mastModal = new bootstrap.Modal(document.getElementById('mastModal'));
+            // Store loaded layers
+            const loadedLayers = {};
+            // Color palette
+            const folderColors = [
+                '#FF0000', '#0000FF', '#00FF00', '#FFA500', '#800080', 
+                '#FFC0CB', '#000000', '#008080', '#FFD700', '#A52A2A'
+            ];
+            let currentColorIndex = 0;
+            // Helper functions
+            function createCustomIcon(color) {
+                return L.divIcon({
+                    html: `<i class="fas fa-map-marker-alt" style="color:${color};font-size:24px"></i>`,
+                    iconSize: [24, 24],
+                    className: 'custom-marker'
+                });
+            }
+            // Main loading function
+            async function loadAllFiles() {
+                try {
+                    const response = await fetch('/api/kml-files');
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const files = await response.json();
+                    if (files.error) throw new Error(files.error);
+                    if (!files || files.length === 0) throw new Error('No KMZ/KML files found');
+                    console.log('Files to load:', files);
+                    const layerGroups = [];
+                    for (const file of files) {
+                        try {
+                            const layerGroup = await loadFile(file);
+                            if (layerGroup) layerGroups.push(layerGroup);
+                        } catch (fileError) {
+                            console.error(`Error loading ${file.name}:`, fileError);
+                        }
+                    }
+                    // Fit bounds if we have valid layers
+                    if (layerGroups.length > 0) {
+                        const group = new L.featureGroup(layerGroups);
+                        try {
+                            const bounds = group.getBounds();
+                            if (bounds.isValid()) map.fitBounds(bounds.pad(0.5));
+                        } catch (e) {
+                            console.log("Bounds error:", e);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading files:', error);
+                    alert(`Failed to load files: ${error.message}`);
+                }
+            }
+            // File loading
+            async function loadFile(file) {
+                try {
+                    const kmlContent = file.type === 'kmz' 
+                        ? await extractKmlFromKmz(file.path) 
+                        : await (await fetch(file.path)).text();
+                    const parser = new DOMParser();
+                    const kmlDoc = parser.parseFromString(kmlContent, 'text/xml');
+                    if (kmlDoc.getElementsByTagName('parsererror').length > 0) {
+                        throw new Error('Invalid KML format');
+                    }
+                    const layerGroup = L.layerGroup();
+                    const folderStructure = {};
+                    processFolders(kmlDoc.getElementsByTagName('Folder'), layerGroup, folderStructure, null, file.name);
+                    loadedLayers[file.name] = {
+                        layer: layerGroup,
+                        folders: folderStructure,
+                        visible: true
+                    };
+                    map.addLayer(layerGroup);
+                    addFileToList(file.name, folderStructure);
+                    return layerGroup;
+                } catch (error) {
+                    console.error(`Error loading ${file.name}:`, error);
+                    return null;
+                }
+            }
+            // Process folders with duplicate prevention
+            function processFolders(folders, layerGroup, folderStructure, parentFolder, fileName) {
+                const seenFolders = new Set();
+                for (let i = 0; i < folders.length; i++) {
+                    const folder = folders[i];
+                    const folderName = folder.getElementsByTagName('name')[0]?.textContent || `Folder ${i+1}`;
+                    // Skip duplicates
+                    if (seenFolders.has(folderName)) continue;
+                    seenFolders.add(folderName);
+                    const placemarks = folder.getElementsByTagName('Placemark');
+                    const hasLocations = placemarks.length > 0;
+                    const currentFolder = {
+                        name: folderName,
+                        hasLocations: hasLocations,
+                        color: hasLocations ? folderColors[currentColorIndex++ % folderColors.length] : null,
+                        subfolders: {},
+                        layer: hasLocations ? L.layerGroup() : null,
+                        file: fileName
+                    };
+                    if (parentFolder) {
+                        parentFolder.subfolders[folderName] = currentFolder;
+                    } else {
+                        folderStructure[folderName] = currentFolder;
+                    }
+                    if (hasLocations) {
+                        try {
+                            const folderKml = new DOMParser().parseFromString(
+                                `<kml xmlns="http://www.opengis.net/kml/2.2">${folder.innerHTML}</kml>`, 
+                                'text/xml'
+                            );
+                            const geojson = toGeoJSON.kml(folderKml);
+                            const folderLayer = L.geoJson(geojson, {
+                                pointToLayer: (feature, latlng) => {
+                                    const marker = L.marker(latlng, {
+                                        icon: createCustomIcon(currentFolder.color),
+                                        riseOnHover: true
+                                    });
+                                    marker.on('click', (e) => {
+                                        showMastSummary(feature.properties.name, fileName, e.latlng);
+                                    });
+                                    if (feature.properties.name) {
+                                        marker.bindTooltip(feature.properties.name, {
+                                            permanent: true,
+                                            direction: 'right',
+                                            className: 'mast-tooltip'
+                                        }).openTooltip();
+                                    }
+                                    return marker;
+                                },
+                                style: {
+                                    color: currentFolder.color,
+                                    weight: 2,
+                                    opacity: 1,
+                                    fillOpacity: 0.5
+                                },
+                                onEachFeature: (feature, layer) => {
+                                    layer.on('click', (e) => {
+                                        showMastSummary(feature.properties.name, fileName, e.latlng);
+                                    });
+                                    if (feature.properties.name) {
+                                        layer.bindTooltip(feature.properties.name, {
+                                            permanent: true,
+                                            direction: 'top',
+                                            className: 'mast-tooltip'
+                                        }).openTooltip();
+                                    }
+                                }
+                            });
+                            currentFolder.layer = folderLayer;
+                            layerGroup.addLayer(folderLayer);
+                        } catch (e) {
+                            console.error(`Error processing locations in ${folderName}:`, e);
+                        }
+                    }
+                    const subFolders = folder.getElementsByTagName('Folder');
+                    if (subFolders.length > 0) {
+                        processFolders(subFolders, layerGroup, folderStructure, currentFolder, fileName);
+                    }
+                }
+            }
+            // KMZ extraction with error handling
+            async function extractKmlFromKmz(url) {
+                try {
+                    const response = await fetch(url);
+                    const blob = await response.blob();
+                    const zip = await JSZip.loadAsync(blob);
+                    const kmlFiles = Object.keys(zip.files).filter(name => 
+                        name.toLowerCase().endsWith('.kml')
+                    );
+                    if (kmlFiles.length === 0) {
+                        throw new Error('No KML file found in KMZ archive');
+                    }
+                    return await zip.file(kmlFiles[0]).async('text');
+                } catch (error) {
+                    console.error('Error extracting KMZ:', error);
+                    throw error;
+                }
+            }
+            // Add a file to the sidebar list with folder structure
+            function addFileToList(fileName, folderStructure) {
+                const li = document.createElement('li');
+                li.dataset.fileName = fileName;
+                // Create the file item container
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                // Add checkbox for the file
+                const fileCheckbox = document.createElement('input');
+                fileCheckbox.type = 'checkbox';
+                fileCheckbox.checked = true;
+                fileCheckbox.id = `toggle-file-${fileName.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                fileCheckbox.addEventListener('change', function() {
+                    toggleFileVisibility(fileName, this.checked);
+                });
+                // Add file name
+                const fileLabel = document.createElement('label');
+                fileLabel.htmlFor = `toggle-file-${fileName.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                fileLabel.textContent = fileName;
+                fileLabel.style.marginLeft = '5px';
+                fileItem.appendChild(fileCheckbox);
+                fileItem.appendChild(fileLabel);
+                // Add to the list item
+                li.appendChild(fileItem);
+                // Create folder list if there are folders
+                if (Object.keys(folderStructure).length > 0) {
+                    const folderList = document.createElement('ul');
+                    folderList.className = 'folder-list';
+                    // Recursively add folders to the sidebar
+                    addFoldersToSidebar(folderList, folderStructure, fileName);
+                    li.appendChild(folderList);
+                }
+                // Add to the file list
+                document.getElementById('file-list').appendChild(li);
+            }
+            // Recursively add folders to sidebar
+            function addFoldersToSidebar(parentElement, folders, fileName, path = '') {
+                for (const [folderName, folderData] of Object.entries(folders)) {
+                    const folderItem = document.createElement('li');
+                    folderItem.className = 'folder-item';
+                    const fullPath = path ? `${path}.${folderName}` : folderName;
+                    const safeId = `${fileName}-${fullPath}`.replace(/[^a-zA-Z0-9]/g, '-');
+                    // Create folder container
+                    const folderContainer = document.createElement('div');
+                    folderContainer.className = 'folder-container';
+                    // Only show icon and checkbox for folders with locations
+                    if (folderData.hasLocations) {
+                        const iconSpan = document.createElement('span');
+                        iconSpan.className = 'file-icon';
+                        iconSpan.innerHTML = `<i class="fas fa-map-marker-alt" style="color:${folderData.color}"></i>`;
+                        folderContainer.appendChild(iconSpan);
+                        const folderCheckbox = document.createElement('input');
+                        folderCheckbox.type = 'checkbox';
+                        folderCheckbox.checked = true;
+                        folderCheckbox.id = `toggle-${safeId}`;
+                        folderCheckbox.dataset.fileName = fileName;
+                        folderCheckbox.dataset.folderPath = fullPath;
+                        folderCheckbox.addEventListener('change', function() {
+                            toggleFolderVisibility(fileName, fullPath, this.checked);
+                            // Toggle all subfolders
+                            toggleSubFolders(fileName, fullPath, this.checked);
+                        });
+                        folderContainer.appendChild(folderCheckbox);
+                    }
+                    // Create folder label
+                    const folderLabel = document.createElement(folderData.hasLocations ? 'label' : 'span');
+                    if (folderData.hasLocations) {
+                        folderLabel.htmlFor = `toggle-${safeId}`;
+                    }
+                    folderLabel.textContent = folderName;
+                    folderLabel.style.marginLeft = '5px';
+                    // Add click handler to zoom to folder
+                    if (folderData.layer) {
+                        folderLabel.addEventListener('click', function(e) {
+                            if (e.target.tagName !== 'INPUT') {
+                                try {
+                                    const bounds = folderData.layer.getBounds();
+                                    if (bounds.isValid()) {
+                                        map.fitBounds(bounds.pad(0.5));
+                                    }
+                                } catch (e) {
+                                    console.log("Could not zoom to bounds:", e);
+                                }
+                            }
+                        });
+                    }
+                    folderContainer.appendChild(folderLabel);
+                    folderItem.appendChild(folderContainer);
+                    // Add subfolders if they exist
+                    if (Object.keys(folderData.subfolders).length > 0) {
+                        const subfolderList = document.createElement('ul');
+                        subfolderList.className = 'subfolder-list';
+                        addFoldersToSidebar(subfolderList, folderData.subfolders, fileName, fullPath);
+                        folderItem.appendChild(subfolderList);
+                    }
+                    parentElement.appendChild(folderItem);
+                }
+            }
+            // Toggle all subfolders of a folder
+            function toggleSubFolders(fileName, folderPath, isVisible) {
+                const folderParts = folderPath.split('.');
+                let current = loadedLayers[fileName].folders;
+                // Navigate to the target folder
+                for (const part of folderParts) {
+                    if (current[part]) {
+                        current = current[part];
+                    } else {
+                        console.error(`Folder not found: ${part} in path ${folderPath}`);
+                        return;
+                    }
+                }
+                // Recursively toggle all subfolders
+                function toggleRecursive(folder) {
+                    if (folder.hasLocations) {
+                        const fullPath = getFolderPath(folder, fileName);
+                        if (fullPath) {
+                            toggleFolderVisibility(fileName, fullPath, isVisible);
+                            const safeId = `${fileName}-${fullPath}`.replace(/[^a-zA-Z0-9]/g, '-');
+                            const checkbox = document.querySelector(`#toggle-${safeId}`);
+                            if (checkbox) {
+                                checkbox.checked = isVisible;
+                            }
+                        }
+                    }
+                    if (folder.subfolders) {
+                        for (const subfolder of Object.values(folder.subfolders)) {
+                            toggleRecursive(subfolder);
+                        }
+                    }
+                }
+                toggleRecursive(current);
+            }
+            // Get full path of a folder
+            function getFolderPath(folder, fileName, currentPath = '') {
+                if (!folder || !loadedLayers[fileName]) return null;
+                // Search through the folder structure
+                function findPath(structure, target) {
+                    for (const [name, data] of Object.entries(structure)) {
+                        if (data === target) {
+                            return name;
+                        }
+                        if (data.subfolders) {
+                            const path = findPath(data.subfolders, target);
+                            if (path) {
+                                return `${name}.${path}`;
+                            }
+                        }
+                    }
+                    return null;
+                }
+                return findPath(loadedLayers[fileName].folders, folder);
+            }
+            // Toggle file visibility
+            function toggleFileVisibility(fileName, isVisible) {
+                if (loadedLayers[fileName]) {
+                    loadedLayers[fileName].visible = isVisible;
+                    if (isVisible) {
+                        map.addLayer(loadedLayers[fileName].layer);
+                        // Recursively show all folders in this file
+                        toggleAllFolders(fileName, true);
+                    } else {
+                        map.removeLayer(loadedLayers[fileName].layer);
+                        // Recursively uncheck all folder checkboxes
+                        toggleAllFolders(fileName, false);
+                    }
+                }
+            }
+            // Toggle all folders in a file
+            function toggleAllFolders(fileName, isVisible) {
+                function toggleRecursive(folders, path = '') {
+                    for (const [folderName, folderData] of Object.entries(folders)) {
+                        const fullPath = path ? `${path}.${folderName}` : folderName;
+                        if (folderData.hasLocations) {
+                            toggleFolderVisibility(fileName, fullPath, isVisible);
+                            const safeId = `${fileName}-${fullPath}`.replace(/[^a-zA-Z0-9]/g, '-');
+                            const checkbox = document.querySelector(`#toggle-${safeId}`);
+                            if (checkbox) {
+                                checkbox.checked = isVisible;
+                            }
+                        }
+                        if (folderData.subfolders) {
+                            toggleRecursive(folderData.subfolders, fullPath);
+                        }
+                    }
+                }
+                toggleRecursive(loadedLayers[fileName].folders);
+            }
+            // Toggle folder visibility
+            function toggleFolderVisibility(fileName, folderPath, isVisible) {
+                const folderParts = folderPath.split('.');
+                let current = loadedLayers[fileName].folders;
+                // Navigate to the target folder
+                for (const part of folderParts) {
+                    if (current[part]) {
+                        current = current[part];
+                    } else {
+                        console.error(`Folder not found: ${part} in path ${folderPath}`);
+                        return;
+                    }
+                }
+                // Toggle the layer visibility
+                if (current.layer) {
+                    if (isVisible) {
+                        loadedLayers[fileName].layer.addLayer(current.layer);
+                    } else {
+                        loadedLayers[fileName].layer.removeLayer(current.layer);
+                    }
+                }
+            }
+function showMastSummary(mastName, fileName, latlng = null) {
+    if (!mastName) return;
+    // Extract mast code from name (if in format like "M9938-Uppalapadu")
+    const mastCode = mastName.replace(/^[^\d]*/, '').split(/[_-]/)[0];
+    // Set modal title and show loading state
+    document.getElementById('mastModalTitle').textContent = `Mast Summary: ${mastName}`;
+    document.getElementById('mastModalBody').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading mast data...</p>
+        </div>`;
+    // Show the modal
+    mastModal.show();
+    // Fetch mast data
+    fetch('/api/mast-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mast_code: mastCode || mastName })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Server responded with status ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            document.getElementById('mastModalBody').innerHTML = `
+                <div class="alert alert-warning">
+                    ${data.error}
+                </div>`;
+            return;
+        }
+        // Define all fields we want to display in order
+        const displayFields = [
+            { key: 'Mast Code', label: 'Mast Code' },
+            { key: 'Name of the Met Mast', label: 'Name' },
+            { key: 'Mast Height(M)', label: 'Mast Height (M)' },
+            { key: 'Commissioning Date', label: 'Commissioning Date' },
+            { key: 'Date of Dismantled', label: 'Date of Dismantled' },
+            { key: 'Data Period', label: 'Data Period' },
+            { key: 'Zone', label: 'Zone' },
+            { key: 'Easting', label: 'Easting' },
+            { key: 'Northing', label: 'Northing' },
+            { key: 'Status', label: 'Status' },
+        ];
+        // Create table with all fields
+        let tableHTML = `
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <tbody>`;
+        // Add rows for each field - always show all fields
+        displayFields.forEach(field => {
+            const value = data[field.key] !== undefined ? data[field.key] : '';
+            tableHTML += `
+                <tr>
+                    <th class="w-25">${field.label}</th>
+                    <td>${value || '-'}</td>
+                </tr>`;
+        });
+        tableHTML += `</tbody></table></div>`;
+        // Update modal content
+        document.getElementById('mastModalBody').innerHTML = tableHTML;
+    })
+    .catch(error => {
+        console.error('Error fetching mast summary:', error);
+        document.getElementById('mastModalBody').innerHTML = `
+            <div class="alert alert-danger">
+                <strong>Error:</strong> ${error.message}
+            </div>`;
+    });
+}
+            // Initialize the application
+            loadAllFiles();
+        });
+    </script>
+{% endblock %}
